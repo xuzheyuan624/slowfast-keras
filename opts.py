@@ -47,6 +47,8 @@ def parse_opts():
     parser.add_argument(
         '--gpus',
         default=[0],
+        type=int,
+        nargs='+',
         help='GPUs for running'
     )
     parser.add_argument(
@@ -76,6 +78,8 @@ def parse_opts():
     parser.add_argument(
         '--short_side',
         default=[256, 320],
+        type=int,
+        nargs='+',
         help='Short side of the image'
     )
     parser.add_argument(

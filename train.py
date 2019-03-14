@@ -9,7 +9,7 @@ from tensorflow.keras.utils import multi_gpu_model
 from model import nets
 from opts import parse_opts
 from utils import get_optimizer, SGDRScheduler_with_WarmUp, TrainPrint, PrintLearningRate, ParallelModelCheckpoint
-from dataset import dataset
+from dataset.dataset import DataGenerator
 
 
 def create_callbacks(opt, steps_per_epoch, model=None):
@@ -50,26 +50,28 @@ def train(opt):
         print("Loading weights from {}".format(opt.pretrained_weights))
 
     optimizer = get_optimizer(opt)
-    model.compile(optimizer=optimizer, loss=categorical_crossentropy, metrics=['accuracy'])
 
-    train_data_generator, train_num = dataset.dataset(opt.data_name, opt.video_path, opt.train_list, opt.name_path, 
-                                                  'train', opt.batch_size, opt.num_classes, True, opt.short_side, 
-                                                  opt.crop_size, opt.clip_len, opt.n_samples_for_each_video)
-    val_data_generator, val_num = dataset.dataset(opt.data_name, opt.video_path, opt.val_list, opt.name_path, 'val', 
-                                                opt.batch_size, opt.num_classes, False, opt.short_side, 
-                                                opt.crop_size, opt.clip_len, opt.n_samples_for_each_video)
+    train_data_generator = DataGenerator(opt.data_name, opt.video_path, opt.train_list, opt.name_path, 
+                                        'train', opt.batch_size, opt.num_classes, True, opt.short_side, 
+                                        opt.crop_size, opt.clip_len, opt.n_samples_for_each_video)
+    val_data_generator = DataGenerator(opt.data_name, opt.video_path, opt.val_list, opt.name_path, 'val', 
+                                        opt.batch_size, opt.num_classes, False, opt.short_side, 
+                                        opt.crop_size, opt.clip_len, opt.n_samples_for_each_video)
     
-    callbacks = create_callbacks(opt, max(1, math.ceil(train_num/opt.batch_size)), model)
+    
+    callbacks = create_callbacks(opt, max(1, train_data_generator.__len__()), model)
 
     if len(opt.gpus) > 1:
         print('Using multi gpus')
         parallel_model = multi_gpu_model(model, gpus=len(opt.gpus))
-        parallel_model.fit_generator(train_data_generator, steps_per_epoch=max(1, math.ceil(train_num/opt.batch_size)),
-                            epochs=opt.epochs, validation_data=val_data_generator, validation_steps=max(1, math.ceil(val_num/opt.batch_size)),
+        parallel_model.compile(optimizer=optimizer, loss=categorical_crossentropy, metrics=['accuracy'])
+        parallel_model.fit_generator(train_data_generator, steps_per_epoch=max(1, train_data_generator.__len__()),
+                            epochs=opt.epochs, validation_data=val_data_generator, validation_steps=max(1, val_data_generator.__len__()),
                             workers=opt.workers, callbacks=callbacks)
     else:
-        model.fit_generator(train_data_generator, steps_per_epoch=max(1, math.ceil(train_num/opt.batch_size)),
-                            epochs=opt.epochs, validation_data=val_data_generator, validation_steps=max(1, math.ceil(val_num/opt.batch_size)),
+        model.compile(optimizer=optimizer, loss=categorical_crossentropy, metrics=['accuracy'])
+        model.fit_generator(train_data_generator, steps_per_epoch=max(1, train_data_generator.__len__()),
+                            epochs=opt.epochs, validation_data=val_data_generator, validation_steps=max(1, val_data_generator.__len__()),
                             workers=opt.workers, callbacks=callbacks)
     model.save_weights(os.path.join(os.path.join(opt.root_path, opt.result_path), 'trained_weights_final.h5'))
 
