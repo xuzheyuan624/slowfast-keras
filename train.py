@@ -4,14 +4,15 @@ import tensorflow as tf
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import Input
 from tensorflow.keras.losses import categorical_crossentropy
-from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
+from tensorflow.keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
+from tensorflow.keras.utils import multi_gpu_model
 from model import nets
 from opts import parse_opts
-from utils import get_optimizer, SGDRScheduler_with_WarmUp, TrainPrint, PrintLearningRate
-from dataset import ucf_dataset
+from utils import get_optimizer, SGDRScheduler_with_WarmUp, TrainPrint, PrintLearningRate, ParallelModelCheckpoint
+from dataset import dataset
 
 
-def create_callbacks(opt, steps_per_epoch):
+def create_callbacks(opt, steps_per_epoch, model=None):
     log_dir = os.path.join(opt.root_path, opt.log_dir)
     if not os.path.exists(log_dir):
         os.mkdir(log_dir)
@@ -20,8 +21,13 @@ def create_callbacks(opt, steps_per_epoch):
     result_path = os.path.join(opt.root_path, opt.result_path)
     if not os.path.exists(result_path):
         os.mkdir(result_path)
-    checkpoint = ModelCheckpoint(os.path.join(result_path, 'ep{epoch:03d}-val_acc{val_acc:.2f}.h5'),
-                                 monitor='val_acc', save_weights_only=True, save_best_only=True, period=1)
+
+    if model is not None:
+        checkpoint = ParallelModelCheckpoint(model, os.path.join(result_path, 'ep{epoch:03d}-val_acc{val_acc:.2f}.h5'),
+                                    monitor='val_acc', save_weights_only=True, save_best_only=True, period=1)
+    else:
+        checkpoint = ModelCheckpoint(os.path.join(result_path, 'ep{epoch:03d}-val_acc{val_acc:.2f}.h5'),
+                                    monitor='val_acc', save_weights_only=True, save_best_only=True, period=1)
     early_stopping = EarlyStopping(monitor='val_acc', min_delta=0, patience=10)
     learning_rate_scheduler = SGDRScheduler_with_WarmUp(0, opt.lr, steps_per_epoch, lr_decay=opt.lr_decay, 
                                                         cycle_length=opt.cycle_length, multi_factor=opt.multi_factor,
@@ -46,22 +52,31 @@ def train(opt):
     optimizer = get_optimizer(opt)
     model.compile(optimizer=optimizer, loss=categorical_crossentropy, metrics=['accuracy'])
 
-    train_data_generator, train_num = ucf_dataset.get_ucf101(opt.video_path, opt.train_list, opt.name_path, 
+    train_data_generator, train_num = dataset.dataset(opt.data_name, opt.video_path, opt.train_list, opt.name_path, 
                                                   'train', opt.batch_size, opt.num_classes, True, opt.short_side, 
                                                   opt.crop_size, opt.clip_len, opt.n_samples_for_each_video)
-    val_data_generator, val_num = ucf_dataset.get_ucf101(opt.video_path, opt.val_list, opt.name_path, 'val', 
+    val_data_generator, val_num = dataset.dataset(opt.data_name, opt.video_path, opt.val_list, opt.name_path, 'val', 
                                                 opt.batch_size, opt.num_classes, False, opt.short_side, 
                                                 opt.crop_size, opt.clip_len, opt.n_samples_for_each_video)
     
-    callbacks = create_callbacks(opt, max(1, math.ceil(train_num/opt.batch_size)))
+    callbacks = create_callbacks(opt, max(1, math.ceil(train_num/opt.batch_size)), model)
 
-    model.fit_generator(train_data_generator, steps_per_epoch=max(1, math.ceil(train_num/opt.batch_size)),
-                        epochs=opt.epochs, validation_data=val_data_generator, validation_steps=max(1, math.ceil(val_num/opt.batch_size)),
-                        workers=opt.workers, callbacks=callbacks)
+    if len(opt.gpus) > 1:
+        print('Using multi gpus')
+        parallel_model = multi_gpu_model(model, gpus=len(opt.gpus))
+        parallel_model.fit_generator(train_data_generator, steps_per_epoch=max(1, math.ceil(train_num/opt.batch_size)),
+                            epochs=opt.epochs, validation_data=val_data_generator, validation_steps=max(1, math.ceil(val_num/opt.batch_size)),
+                            workers=opt.workers, callbacks=callbacks)
+    else:
+        model.fit_generator(train_data_generator, steps_per_epoch=max(1, math.ceil(train_num/opt.batch_size)),
+                            epochs=opt.epochs, validation_data=val_data_generator, validation_steps=max(1, math.ceil(val_num/opt.batch_size)),
+                            workers=opt.workers, callbacks=callbacks)
     model.save_weights(os.path.join(os.path.join(opt.root_path, opt.result_path), 'trained_weights_final.h5'))
 
     
 if __name__=="__main__":
     opt = parse_opts()
     print(opt)
+    if len(opt.gpus) > 1:
+        os.environ['CUDA_VISIBLE_DEVICES'] = ",".join(map(str, opt.gpus))
     train(opt)

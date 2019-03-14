@@ -3,12 +3,11 @@ import random
 import math
 import copy
 import numpy as np
-from .spatial_transforms import RandomCrop, Scale, RandomHorizontalFlip, CenterCrop, Compose, Normalize
+from .spatial_transforms import RandomCrop, Scale, RandomHorizontalFlip, CenterCrop, Compose, Normalize, PreCenterCrop
 from .tempora_transforms import TemporalRandomCrop, TemporalCenterCrop
 from .utils import load_value_file, load_clip_video
 
-def get_ucf101(video_path, file_path, name_path, mode, batch_size, num_classes, shuffle, short_side=[256, 320], crop_size=224, clip_len=64, n_samples_for_each_video=1):
-    
+def get_ucf101(video_path, file_path, name_path, mode, num_classes):
     name2index = {}
 
     lines = open(name_path, 'r').readlines()
@@ -26,14 +25,20 @@ def get_ucf101(video_path, file_path, name_path, mode, batch_size, num_classes, 
         elif mode == 'val':
             path = path_label
         else:
-            raise ValueError('mode must be train  or val')
+            raise ValueError('mode must be train or val')
         pathname, _ = os.path.splitext(path)
         video_files.append(os.path.join(video_path, pathname))
         label = pathname.split('/')[0]
         label_files.append(name2index[label])
+    return video_files, label_files
+
+def dataset(name, video_path, file_path, name_path, mode, batch_size, num_classes, shuffle, short_side=[256, 320], crop_size=224, clip_len=64, n_samples_for_each_video=1):
+    if name == 'ucf101':
+        video_files, label_files = get_ucf101(video_path, file_path, name_path, mode, num_classes)
 
     if mode == 'train':
         spatial_transforms = Compose([
+            PreCenterCrop(),
             RandomCrop(crop_size),
             RandomHorizontalFlip(),
             Normalize()
@@ -41,6 +46,7 @@ def get_ucf101(video_path, file_path, name_path, mode, batch_size, num_classes, 
         temporal_transforms = TemporalRandomCrop(clip_len)
     elif mode == 'val':
         spatial_transforms = Compose([
+            PreCenterCrop(),
             Scale(crop_size),
             Normalize()
         ])

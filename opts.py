@@ -39,6 +39,17 @@ def parse_opts():
         help='Directory of results'
     )
     parser.add_argument(
+        '--data_name',
+        default='ntu',
+        type=str,
+        help='Name of dataset'
+    )
+    parser.add_argument(
+        '--gpus',
+        default=[0],
+        help='GPUs for running'
+    )
+    parser.add_argument(
         '--log_dir',
         default='log',
         type=str,
