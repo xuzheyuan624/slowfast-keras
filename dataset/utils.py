@@ -1,7 +1,7 @@
 
 import random
 import os
-import cv2
+from PIL import Image
 
 
 def load_clip_video(video_path, frame_indices):
@@ -16,9 +16,9 @@ def load_clip_video(video_path, frame_indices):
 
 
 def load_image(image_path):
-    img = cv2.imread(image_path, cv2.IMREAD_COLOR)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    return img
+    with open(image_path, 'rb') as f:
+        with Image.open(f) as img:
+            return img.convert('RGB')
 
 
 

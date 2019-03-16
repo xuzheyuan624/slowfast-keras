@@ -3,6 +3,7 @@ import random
 import numpy as np
 import collections
 import numbers
+from PIL import Image
 
 class Compose(object):
     def __init__(self, transforms=[]):
@@ -24,6 +25,7 @@ class Normalize(object):
         self.std = std
 
     def __call__(self, img):
+        img = np.array(img)
         img = (img - np.array([[self.mean]])) / np.array([[self.std]])
         return img
 
@@ -31,7 +33,7 @@ class Normalize(object):
         pass
 
 class Scale(object):
-    def __init__(self, size, interpolation=cv2.INTER_AREA):
+    def __init__(self, size, interpolation=Image.BILINEAR):
         assert isinstance(size, int) or (isinstance(size, collections.Iterable) and len(size)==2)
 
         self.size = size
@@ -39,19 +41,19 @@ class Scale(object):
 
     def __call__(self, img):
         if isinstance(self.size, int):
-            h, w = img.shape[:2]
+            w, h = img.size
             if (w <= h and w == self.size) or (h <= w and h == self.size):
                 return img
             if w < h:
                 ow = self.size
                 oh = int(self.size * h / w)
-                return cv2.resize(img, (ow, oh), self.interpolation)
+                return img.resize((ow, oh), self.interpolation)
             else:
                 oh = self.size
                 ow = int(self.size * w / h)
-                return cv2.resize(img, (ow, oh), self.interpolation)
+                return img.resize((ow, oh), self.interpolation)
         else:
-            return cv2.resize(img, self.size, self.interpolation)
+            return img.resize((self.size, self.size), self.interpolation)
 
     def randomize_parameters(self):
         pass
@@ -64,11 +66,11 @@ class CenterCrop(object):
             self.size = size
 
     def __call__(self, img):
-        h, w = img.shape[:2]
+        w, h = img.size
         th, tw = self.size
         y1 = int(round((h - th)/2.))
         x1 = int(round((w - tw)/2.))
-        return img[y1:y1+th, x1:x1+tw, :]
+        return img.crop((x1, y1, x1+tw, y1+th))
 
 
 class CornerCrop(object):
@@ -85,7 +87,7 @@ class CornerCrop(object):
         self.crop_position = crop_position
 
     def __call__(self, img):
-        h, w = img.shape[:2]
+        w, h = img.size
 
         if self.crop_position == 'c':
             th, tw = self.size
@@ -114,7 +116,7 @@ class CornerCrop(object):
             y2 = h
             x2 = w
 
-        return img[y1:y2, x1:x2, :]
+        return img.crop((x1, y1, x2, y2))
 
     def randomize_parameters(self):
         if self.randomize:
@@ -126,7 +128,7 @@ class RandomHorizontalFlip(object):
 
     def __call__(self, img):
         if self.p < 0.5:
-            return img[:, ::-1, :]
+            return img.transpose(Image.FLIP_LEFT_RIGHT)
         else:
             return img
     
@@ -141,15 +143,17 @@ class RandomCrop(object):
             self.size = size
     
     def __call__(self, img):
-        h, w = img.shape[:2]
+        w, h = img.size
         th, tw = self.size
         x1 = int(self.x * (w - tw))
         y1 = int(self.y * (h - th))
         x2 = x1 + tw
         y2 = y1 + th
-        return img[y1:y2, x1:x2, :]
+        return img.crop((x1, y1, x2, y2))
 
     def randomize_parameters(self):
         self.x = random.random()
         self.y = random.random()
+
+
 
