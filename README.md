@@ -6,8 +6,14 @@ This code use half-period cosine schedule of learning rate decaying and warm-up 
 tensorflow >= 1.12<br>
 pillow>=5.1.0
 
+##Get code
+```
+git clone 
+cd slowfast-keras
+```
+
 ## Train
-### 1. Prepare the dataset
+### 1. Download the dataset
 You can use UCF101 or other datasets, which should be orgnized as :
 <!-- TOC -->
 - UCF101
@@ -21,10 +27,23 @@ You can use UCF101 or other datasets, which should be orgnized as :
     - testlist01.txt
     - ......
 <!-- /TOC -->
-### 2. Change settings
-You must change the root_path, video_path, name_path or others in train.sh for your own.
+### 2. Prepare dataset for training
+convert video to jpgs with:
+```
+python utils/ucf_hmdb51_frames.py UCF101 UCF101_jpg
+```
+calculate the video's frames
+```
+python utils/ucf_hmdb51_frames.py UCF101_jpg
+```
 
-### 3. Train
+### 3. Change settings and Train
+You must change the ```root_path, video_path, name_path``` or others in train.sh for your own.<br>
+For example: 
+```root_path```is ```path to slowfast-keras```<br>
+```video_path```is```path to UCF101_jpg```<br>
+```name_path```is ```path to classInd.txt```
+......
 Then you can train with:<br>
 ```
 bash train.sh
