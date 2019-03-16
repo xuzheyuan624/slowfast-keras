@@ -9,7 +9,6 @@ pillow>=5.1.0
 ## Train
 ### 1. Prepare the dataset
 You can use UCF101 or other datasets, which should be orgnized as :
-
 <!-- TOC -->
 - UCF101
     - ApplyEyeMakeUp
@@ -22,7 +21,6 @@ You can use UCF101 or other datasets, which should be orgnized as :
     - testlist01.txt
     - ......
 <!-- /TOC -->
-
 ### 2. Change settings
 You must change the root_path, video_path, name_path or others in train.sh for your own.
 
@@ -31,6 +29,9 @@ Then you can train with:<br>
 ```
 bash train.sh
 ```
-
 ## Contact
 If you have questions or suggestions, you can cantact me at [xuzheyuan624@163.com](xuzheyuan624@163.com)
+## Code Reference
+[1] [SlowFastNetworks](https://github.com/RI-CH/SlowFastNetworks)<br>
+[2] [3D-ResNets-Pytorch](https://github.com/kenshohara/3D-ResNets-PyTorch)<br>
+[3] [SGDR](https://gist.github.com/jeremyjordan/5a222e04bb78c242f5763ad40626c452)
