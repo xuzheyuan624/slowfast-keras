@@ -16,7 +16,7 @@ cd slowfast-keras
 ### 1. Download the dataset
 You can use UCF101 or other datasets, which should be orgnized as :
 <!-- TOC -->
-- UCF101
+- [UCF101](https://www.crcv.ucf.edu/datasets/human-actions/ucf101/UCF101.rar)
     - ApplyEyeMakeUp
     - ApplyLipstick
     - Archery
