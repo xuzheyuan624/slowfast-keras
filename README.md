@@ -8,7 +8,7 @@ pillow>=5.1.0
 
 ##Get code
 ```
-git clone 
+git clone https://github.com/xuzheyuan624/slowfast-keras.git
 cd slowfast-keras
 ```
 
@@ -42,8 +42,8 @@ You must change the ```root_path, video_path, name_path``` or others in train.sh
 For example: 
 ```root_path```is ```path to slowfast-keras```<br>
 ```video_path```is```path to UCF101_jpg```<br>
-```name_path```is ```path to classInd.txt```
-......
+```name_path```is ```path to classInd.txt```<br>
+......<br>
 Then you can train with:<br>
 ```
 bash train.sh
