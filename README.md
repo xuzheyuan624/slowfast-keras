@@ -38,7 +38,7 @@ python utils/ucf_hmdb51_frames.py UCF101_jpg
 ```
 
 ### 3. Change settings and Train
-You must change the ```root_path, video_path, name_path``` or others in train.sh for your own.<br>
+You must change the ```root_path, video_path, name_path``` or others in train.sh for your own. See details in ```opts.py```<br>
 For example: 
 ```root_path```is ```path to slowfast-keras```<br>
 ```video_path```is```path to UCF101_jpg```<br>
