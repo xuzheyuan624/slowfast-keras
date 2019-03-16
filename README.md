@@ -17,6 +17,6 @@ You must change the root_path, video_path, name_path or others in train.sh for y
 
 ### 3. Train
 Then you can train with:</ br>
-'''
+‘’‘
 bash train.sh
-'''
+’‘’
