@@ -57,6 +57,26 @@ class Scale(object):
 
     def randomize_parameters(self):
         pass
+    
+class RandomScale(object):
+    def __init__(self, short_sides, interpolation=Image.BILINEAR):
+        self.short_sides = short_sides
+        self.interpolation = interpolation
+
+    def __call__(self, img):
+        w, h = img.size
+        if (w <= h and w == self.short_side) or (h <= w and h == self.short_side):
+            return img
+        if w < h:
+            ow = self.short_side
+            oh = int(self.short_side * h / w)
+        else:
+            oh = self.short_side
+            ow = int(self.short_side * w / h)
+        return img.resize((ow, oh), self.interpolation)
+
+    def randomize_parameters(self):
+        self.short_side = random.choice(self.short_sides)
 
 class CenterCrop(object):
     def __init__(self, size):
