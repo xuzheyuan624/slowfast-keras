@@ -4,7 +4,7 @@ import math
 import copy
 import numpy as np
 from tensorflow.keras.utils import Sequence
-from .spatial_transforms import RandomCrop, Scale, RandomHorizontalFlip, CenterCrop, Compose, Normalize
+from .spatial_transforms import RandomCrop, Scale, RandomScale, RandomHorizontalFlip, CenterCrop, Compose, Normalize
 from .tempora_transforms import TemporalRandomCrop, TemporalCenterCrop
 from .utils import load_value_file, load_clip_video
 
@@ -48,6 +48,7 @@ class DataGenerator(Sequence):
 
         if mode == 'train':
             self.spatial_transforms = Compose([
+                RandomScale(short_side),
                 RandomCrop(crop_size),
                 RandomHorizontalFlip(),
                 Normalize()
@@ -56,6 +57,7 @@ class DataGenerator(Sequence):
         elif mode == 'val':
             self.spatial_transforms = Compose([
                 Scale(crop_size),
+                CenterCrop(crop_size),
                 Normalize()
             ])
             self.temporal_transforms = TemporalCenterCrop(clip_len)
