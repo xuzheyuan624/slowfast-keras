@@ -48,8 +48,6 @@ Then you can train with:<br>
 ```
 bash train.sh
 ```
-## Contact
-If you have questions or suggestions, you can cantact me at [xuzheyuan624@163.com](xuzheyuan624@163.com)
 ## Code Reference
 [1] [SlowFastNetworks](https://github.com/RI-CH/SlowFastNetworks)<br>
 [2] [3D-ResNets-Pytorch](https://github.com/kenshohara/3D-ResNets-PyTorch)<br>
